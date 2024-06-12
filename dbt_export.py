@@ -76,18 +76,42 @@ def generate_parent_refs(view_path, parents: list[dict], catalog_lookup: dict[di
     return parent_paths
 
 
-def generate_config(dbt_config: dict[str]) -> str:
-    c = "alias='" + dbt_config['alias'] + "'"
-    c += ",\ndatabase='" + dbt_config['database'] + "'"
-    if dbt_config['schema']:
+def generate_config(dbt_config: dict[str], parent_paths: list[str]) -> str:
+    c = ""
+    if dbt_config.get('alias'):
+        c += "alias='" + dbt_config['alias'] + "'"
+    if dbt_config.get('database'):
+        c += ",\ndatabase='" + dbt_config['database'] + "'"
+    if dbt_config.get('schema'):
         c += ",\nschema='" + ".".join(dbt_config['schema']) + "'"
-    if dbt_config['pre_hook']:
+    if dbt_config.get('pre_hook'):
         pre_hooks_str = ',\npre_hook=[\n'
         for h in dbt_config['pre_hook']:
             pds_path = '"' + '"."'.join(h) + '"'
             pre_hooks_str += f"    'ALTER PDS {pds_path} REFRESH METADATA AUTO PROMOTION',\n"
         pre_hooks_str = pre_hooks_str[:-2] + '\n]\n'
-        c = c + pre_hooks_str
+        c += pre_hooks_str
+
+    # For reflections
+    if dbt_config.get('reflection_type'):
+        c += "materialized='reflection'"
+        c += ",\nreflection_type='" + dbt_config['reflection_type'] + "'"
+    if dbt_config.get('display'):
+        cols = str(dbt_config['display'].split(', '))
+        c += ",\ndisplay=" + cols
+    if dbt_config.get('dimensions'):
+        cols = str(dbt_config['dimensions'].split(', '))
+        c += ",\ndimensions=" + cols
+    if dbt_config.get('measures'):
+        cols = str(dbt_config['measures'].split(', '))
+        c += ",\nmeasures=" + cols
+    # TODO: computations
+    if dbt_config.get('localsort_by'):
+        cols = str(dbt_config['localsort_by'].split(', '))
+        c += ",\nlocalsort_by=" + cols
+    if dbt_config.get('partition_by'):
+        cols = str(dbt_config['partition_by'].split(', '))
+        c += ",\npartition_by=" + cols
 
     config_line = '{{ config(' + c + ') }}\n'
     depends_on = ''
@@ -143,7 +167,7 @@ if __name__ == '__main__':
 
         parent_paths = generate_parent_refs(view_path, parents, catalog_lookup)
 
-        config = generate_config(dbt_config)
+        config = generate_config(dbt_config, parent_paths)
         sql_definition = config + sql_definition
         if sql_context:
             context = str(sql_context.split('.')) # Note that this logic does not handle special cases like "Samples"."samples.dremio.com"
@@ -157,6 +181,53 @@ if __name__ == '__main__':
         with open(model_name, "w") as file:
             file.write(sql_definition)
     
+    # Retrieve full list of reflections and SQL definitions from system table
+    job_id = api.post_sql_query('SELECT * FROM sys.reflections')
+    reflections = api.get_query_data(job_id)
+
+    for r in reflections['rows']:
+        reflection_name = r['reflection_name']
+        reflection_id = r['reflection_id']
+        reflection_type = r['type']
+        dataset_id = r['dataset_id']
+        dataset_name = r['dataset_name']
+        dataset_type = r['dataset_type']
+        display_columns = r['display_columns']
+        sort_columns = r['sort_columns']
+        partition_columns = r['partition_columns']
+        dimensions = r['dimensions']
+        measures = r['measures']
+        try:
+            dataset_path = catalog_lookup[dataset_id]['object_path']
+            ref = generate_path_str(dataset_path)
+        except Exception as e:
+            #logger.error(f"Lookup entry not found for {dataset_name} - {dataset_id}")
+            continue
+
+        if reflection_type == 'RAW':
+            refl_type = 'raw'
+        elif reflection_type == 'AGGREGATION':
+            refl_type = 'aggregate'
+        else:
+            logger.error(f"Unexpected reflection type {reflection_type} for dataset {dataset_name}")
+            continue
+
+        dbt_config = {
+            'reflection_type': refl_type,
+            'display': display_columns,
+            'dimensions': dimensions,
+            'measures': measures,
+            'computations': None, # TODO
+            'localsort_by': sort_columns,
+            'partition_by': partition_columns,
+        }
+        config = generate_config(dbt_config, [ref])
+
+        refl_path = str(dir_path) + "/models/" + "/".join(dataset_path[:-1])
+        refl_name = refl_path + "/REFL_" + reflection_name + "_" + reflection_id[:8] + ".sql"
+
+        with open(refl_name, "w") as file:
+            file.write(config)
 
     data_sources = set()
 
