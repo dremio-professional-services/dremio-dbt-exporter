@@ -4,3 +4,4 @@ dremio_catalog_entries.json
 dremio_catalog_lookup.json
 pds_paths.json
 .DS_Store
+models/

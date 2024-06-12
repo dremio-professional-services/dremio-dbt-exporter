@@ -12,9 +12,13 @@ Then run `python3 dbt_export.py`.
 The results will be exported into the `models/` subfolder.
 
 # Requirements
-- Dremio Software cluster
-- Dremio ADMIN account and access token
 - Python 3
+- Dremio Software cluster
+- Dremio access token
+- Required privileges:
+  - User must have `ADMIN` role or have either `SELECT` or `VIEW REFLECTION` privilege on the desired scope
+  - User must have `SELECT` privilege on sys.views table or an equivalent view (e.g. `GRANT SELECT ON TABLE sys.views TO USER "<xyz>";`)
+  - User must have `SELECT` privilege on sys.reflections table or an equivalent view (e.g. `GRANT SELECT ON TABLE sys.reflections TO USER "<xyz>";`)
 
 # Supported Dremio object types
 - Views (VDSs)

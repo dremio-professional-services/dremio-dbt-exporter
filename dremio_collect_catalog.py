@@ -70,6 +70,16 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             vds_graph = api.get_catalog(catalog_id=f"{catalog_id}/graph")
             try:
                 parents = vds_graph['parents']
+                if len(parents) == 0:
+                    logger.debug(f"No parent objects for view {child['path']} could be found (likely due to RBAC)")
+                    data_sources.append({
+                        "id": catalog_id,
+                        "object_type": type_name, 
+                        "object_path": child['path'],
+                        "parent": [],
+                        "parent_id": ""
+                    })
+                    
                 for parent in parents:
                     data_sources.append({
                         "id": catalog_id,

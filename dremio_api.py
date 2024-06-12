@@ -53,7 +53,7 @@ class DremioAPI:
                 break
             elif job_state in {"CANCELED", "FAILED"}:
                 status = job_state + " - " + data.get("errorMessage", "")
-                logger.debug(status)
+                logger.warning(status)
                 break
         return job_state
 
