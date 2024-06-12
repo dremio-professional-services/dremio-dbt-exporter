@@ -28,7 +28,6 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root) -> list:
             logger.info(f"Traversing SOURCE {entry['path']} ...")
             catalog_entries = collect_dremio_catalog_children(api, catalog_entries, catalog_id, data_source_path=entry['path'])
         elif container_type == 'SPACE':
-            continue
             catalog_id = entry['id']
             logger.info(f"Traversing SPACE {entry['path']} ...")
             catalog_entries = collect_dremio_catalog_children(api, catalog_entries, catalog_id)

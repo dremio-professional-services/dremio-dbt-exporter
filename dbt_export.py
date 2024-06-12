@@ -122,7 +122,7 @@ if __name__ == '__main__':
         view_id = row['view_id']
         view_name = row['view_name']
         sql_definition = row['sql_definition']
-        sql_context = row['sql_context']
+        sql_context: str = row['sql_context']
         try:
             parents = catalog_lookup[view_id]['parents']
             view_path = catalog_lookup[view_id]['object_path']
@@ -145,6 +145,9 @@ if __name__ == '__main__':
 
         config = generate_config(dbt_config)
         sql_definition = config + sql_definition
+        if sql_context:
+            context = str(sql_context.split('.')) # Note that this logic does not handle special cases like "Samples"."samples.dremio.com"
+            sql_definition += "\n--SQL_CONTEXT=" + context
 
         # create the new directories as needed
         if not os.path.exists(model_path):
@@ -166,6 +169,6 @@ if __name__ == '__main__':
         json.dump(pdss, f)
         logger.info(f"Created pds_paths.json with {len(pdss)} entries")
     
-    logger.info("\nData sources found:")
+    logger.info("Data sources found:")
     for d in data_sources:
         logger.info(d)
