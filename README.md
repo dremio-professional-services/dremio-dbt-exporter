@@ -5,11 +5,18 @@ Dremio REST API-based script to export catalog entities as SQL definitions into 
 In the file `dbt_export.py`, set the following variables:
 ```
 DREMIO_ENDPOINT = "https://<DREMIO_ENDPOINT>"
-DREMIO_PAT = "<INSERT_DREMIO_ADMIN_PAT>" 
+DREMIO_PAT = "<INSERT_DREMIO_ADMIN_PAT>"
 ```
 
 Then run `python3 dbt_export.py`.
 The results will be exported into the `models/` subfolder.
+
+Optionally, you can provide space names and source folder paths for filtering of objects using the following variables:
+```
+source_selector = [["my-s3-bucket", "folder1"], ["my-adls-source", "folder2"]]
+space_selector = {"DremioSpace1", "UseCase2"}
+```
+
 
 # Requirements
 - Python 3

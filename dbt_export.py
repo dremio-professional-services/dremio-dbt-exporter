@@ -3,7 +3,6 @@ import json
 import dremio_api
 import dremio_collect_catalog
 import os
-import re
 import sys
 import urllib3
 urllib3.disable_warnings()
@@ -23,9 +22,9 @@ def generate_path_str(view_path: list[str]) -> str:
     return s
 
 
-def write_catalog_entries_to_file(api: dremio_api.DremioAPI) -> list[dict]:
+def write_catalog_entries_to_file(api: dremio_api.DremioAPI, space_selector=set(), source_selector=set()) -> list[dict]:
 
-    catalog_entries = dremio_collect_catalog.get_catalog_entries(api)
+    catalog_entries = dremio_collect_catalog.get_catalog_entries(api, space_selector, source_selector)
     json_filename = 'dremio_catalog_entries.json'
     with open(json_filename, 'w') as f:
         json.dump(catalog_entries, f)
@@ -122,22 +121,44 @@ def generate_config(dbt_config: dict[str], parent_paths: list[str]) -> str:
     return config
 
 
+def build_sys_views_filter(space_selector: set) -> str:
+    s = ""
+    if len(space_selector) > 0:
+        s += "WHERE FALSE"
+        for space in space_selector:
+            s += f"\n   OR path LIKE '[{space}%' "
+    return s
+
+
+def build_sys_reflections_filter(space_selector: set) -> str:
+    s = ""
+    if len(space_selector) > 0:
+        s += "WHERE FALSE"
+        for space in space_selector:
+            s += f"\n   OR dataset_name LIKE '{space}%' OR dataset_name LIKE '\"{space}%' "
+    return s
+
+
 if __name__ == '__main__':
 
     DREMIO_ENDPOINT = ""
     DREMIO_PAT = ""
     
+    source_selector = [[]]
+    space_selector = {}
+
     api = dremio_api.DremioAPI(DREMIO_PAT, DREMIO_ENDPOINT, timeout=60)
 
-    if False:
-        catalog_entries = write_catalog_entries_to_file(api)
+    if True:
+        catalog_entries = write_catalog_entries_to_file(api, space_selector, source_selector)
         catalog_lookup = write_catalog_lookup_to_file(catalog_entries)
     else: # for local debugging
         with open("dremio_catalog_lookup.json", 'r') as f:
             catalog_lookup = json.load(f)
 
     # Retrieve full list of views and SQL definitions from system table
-    job_id = api.post_sql_query('SELECT * FROM sys.views')
+    where_clause = build_sys_views_filter(space_selector)
+    job_id = api.post_sql_query('SELECT * FROM sys.views ' + where_clause)
     views = api.get_query_data(job_id)
 
     pdss = []
@@ -182,7 +203,8 @@ if __name__ == '__main__':
             file.write(sql_definition)
     
     # Retrieve full list of reflections and SQL definitions from system table
-    job_id = api.post_sql_query('SELECT * FROM sys.reflections')
+    where_clause = build_sys_reflections_filter(space_selector)
+    job_id = api.post_sql_query('SELECT * FROM sys.reflections ' + where_clause)
     reflections = api.get_query_data(job_id)
 
     for r in reflections['rows']:
