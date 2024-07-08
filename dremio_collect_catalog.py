@@ -72,7 +72,7 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                 logger.info(f"Skipping FOLDER {child['path']} based on source selector settings.") # TODO: set to debug level
             else:
                 logger.info(f"Traversing FOLDER {child['path']} ...")
-                data_sources = collect_dremio_catalog_children(api, data_sources, catalog_id, data_source_path)
+                data_sources = collect_dremio_catalog_children(api, data_sources, catalog_id, data_source_path, source_selector)
         elif child['type'] == 'DATASET' and dataset_type == 'PROMOTED':
             type_name = 'PDS'
             data_sources.append({
