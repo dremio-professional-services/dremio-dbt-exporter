@@ -34,7 +34,9 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root, space_select
                     "object_type": type_name, 
                     "object_path": entry['path'],
                     "parent": [],
-                    "parent_id": ""
+                    "parent_id": "",
+                    "owner_id": entry.get("owner", {}).get("ownerId"),
+                    "acl": entry.get("accessControlList", [])
                 })
                 logger.info(f"Traversing SOURCE {entry['path']} ...")
                 catalog_entries = collect_dremio_catalog_children(api, catalog_entries, catalog_id, data_source_path=entry['path'], source_selector=source_selector)
