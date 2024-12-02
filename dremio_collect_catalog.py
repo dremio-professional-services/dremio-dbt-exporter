@@ -53,8 +53,7 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             "object_path": catalog_sub_tree.get("path", []),
             "parent": [],
             "parent_id": "",
-            "owner_id": catalog_sub_tree.get("owner", {}).get("ownerId"),
-            "acl": catalog_sub_tree.get("accessControlList", [])
+            "parent_type": ""
         })
     except KeyError:
         logger.info(f"Skipping catalog ID {catalog_id}")
@@ -75,7 +74,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                 "object_type": type_name,
                 "object_path": child['path'],
                 "parent": data_source_path,
-                "parent_id": ""
+                "parent_id": "",
+                "parent_type": "SOURCE"
             })
         elif child['type'] == 'DATASET' and dataset_type == 'VIRTUAL':
             type_name = 'VDS'
@@ -89,7 +89,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                         "object_type": type_name, 
                         "object_path": child['path'],
                         "parent": [],
-                        "parent_id": ""
+                        "parent_id": "",
+                        "parent_type": ""
                     })
                     
                 for parent in parents:
@@ -98,7 +99,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                         "object_type": type_name, 
                         "object_path": child['path'],
                         "parent": parent['path'],
-                        "parent_id": parent['id']
+                        "parent_id": parent['id'],
+                        "parent_type": parent['datasetType']
                     })
             except KeyError as e:
                 logger.error(f"Data lineage for view {child['path']} could not be retrieved")
@@ -107,7 +109,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                     "object_type": type_name, 
                     "object_path": child['path'],
                     "parent": [],
-                    "parent_id": ""
+                    "parent_id": "",
+                    "parent_type": ""
                 })
 
             # # Add column entries
@@ -140,7 +143,8 @@ def generate_catalog_lookup(catalog_entries: list[dict]):
         catalog_id = entry['id']
         parent_entry = {
             "id": entry['parent_id'],
-            "name": entry['parent']
+            "name": entry['parent'],
+            "type": entry['parent_type']
         }
         if catalog_id in catalog_lookup:
             catalog_lookup[catalog_id]['parents'].append(parent_entry)
