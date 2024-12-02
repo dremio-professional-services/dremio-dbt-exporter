@@ -262,6 +262,13 @@ if __name__ == '__main__':
     with open("pds_paths.json", 'w') as f:
         json.dump(pdss, f)
         logger.info(f"Created pds_paths.json with {len(pdss)} entries")
+
+    with open("pds_promote.sql", 'w') as f:
+        sql_txt = ""
+        for pds in pdss:
+            pds_path = '"' + '"."'.join(pds) + '"'
+            sql_txt += f'ALTER PDS {pds_path} REFRESH METADATA AUTO PROMOTION;\n'
+        f.write(sql_txt)
     
     logger.info("Data sources found:")
     for d in data_sources:
