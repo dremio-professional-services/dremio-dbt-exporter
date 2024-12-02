@@ -5,8 +5,8 @@ logger = logging.getLogger(__name__)
 
 class DremioAPI:
 
-    def __init__(self, dremio_pat, dremio_url, timeout=10, verify=False):
-        self.dremio_url = dremio_url
+    def __init__(self, dremio_pat: str, dremio_url: str, timeout=10, verify=False):
+        self.dremio_url = dremio_url.rstrip("/")
         self.timeout = timeout
         self.verify = verify
         self.headers = {
