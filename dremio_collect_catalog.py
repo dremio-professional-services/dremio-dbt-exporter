@@ -28,16 +28,6 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root, space_select
                 logger.info(f"Skipping SOURCE {entry['path']} based on source selector settings.")
             else:
                 catalog_id = entry['id']
-                type_name = 'DataSource'
-                catalog_entries.append({
-                    "id": catalog_id,
-                    "object_type": type_name, 
-                    "object_path": entry['path'],
-                    "parent": [],
-                    "parent_id": "",
-                    "owner_id": entry.get("owner", {}).get("ownerId"),
-                    "acl": entry.get("accessControlList", [])
-                })
                 logger.info(f"Traversing SOURCE {entry['path']} ...")
                 catalog_entries = collect_dremio_catalog_children(api, catalog_entries, catalog_id, data_source_path=entry['path'], source_selector=source_selector)
         elif container_type == 'SPACE':
@@ -55,6 +45,8 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root, space_select
 def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: list, catalog_id, data_source_path=None, source_selector=[[]]) -> list:
     catalog_sub_tree = api.get_catalog(catalog_id)
     try:
+        if catalog_sub_tree["entityType"] in ["source", "space"]:
+            catalog_sub_tree["path"] = [catalog_sub_tree["name"]]
         data_sources.append({
             "id": catalog_id,
             "object_type": catalog_sub_tree["entityType"],
