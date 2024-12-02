@@ -59,7 +59,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             "object_path": catalog_sub_tree.get("path", []),
             "parent": [],
             "parent_id": "",
-            "owner_id": catalog_sub_tree.get("owner", {}).get("ownerId")
+            "owner_id": catalog_sub_tree.get("owner", {}).get("ownerId"),
+            "acl": catalog_sub_tree.get("accessControlList", [])
         })
     except KeyError:
         logger.info(f"Skipping catalog ID {catalog_id}")
