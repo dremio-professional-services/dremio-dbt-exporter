@@ -1,0 +1,11 @@
+{
+    "source_selector": [
+        ["my-s3-bucket", "folder1"],
+        ["my-adls-source", "folder2", "subfolder3"]
+    ],
+    "space_selector": [
+        "space1",
+        "space2",
+        "etc"
+    ]
+}

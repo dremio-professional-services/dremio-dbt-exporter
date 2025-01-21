@@ -1,3 +1,4 @@
+import argparse
 import logging
 import json
 import dremio_api
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def generate_path_str(view_path: list[str]) -> str:
     s = "_".join(view_path)
+    s = s.replace(" ", "")
     s = s.lower()
     return s
 
@@ -92,10 +94,14 @@ def generate_config(dbt_config: dict[str], parent_paths: list[str]) -> str:
         c += pre_hooks_str
 
     # For reflections
-    # TODO: Review & test dbt-dremio 1.8.1 changes
     if dbt_config.get('reflection_type'):
         c += "materialized='reflection'"
         c += ",\nreflection_type='" + dbt_config['reflection_type'] + "'"
+        if dbt_config['reflection_type'] == "aggregate":
+            logger.warning(f"Please validate agg reflection measure computations for {parent_paths}, as this is currently not supported!"
+                           "\nSee: https://github.com/dremio-professional-services/dremio-dbt-exporter/issues/5")
+    if dbt_config.get('reflection_name'):
+        c += ",\nname='" + dbt_config['reflection_name'] + "'"
     if dbt_config.get('display'):
         cols = str(dbt_config['display'].split(', '))
         c += ",\ndisplay=" + cols
@@ -139,16 +145,26 @@ def build_sys_reflections_filter(space_selector: set) -> str:
             s += f"\n   OR dataset_name LIKE '{space}%' OR dataset_name LIKE '\"{space}%' "
     return s
 
+def parse_cli_args():
+    parser = argparse.ArgumentParser(description='Dremio dbt exporter')
+    parser.add_argument('--export-filter-json', type=str,
+                        help='Absolute path to export_filter.json file.',
+                        required=True)
+    parser.add_argument('--dremio-endpoint', type=str, help='Dremio URL incl. https:// prefix', required=True)
+    parser.add_argument('--dremio-pat', type=str, help='Dremio PAT', required=True)
+    cli_args = parser.parse_args()
+    return cli_args
 
 if __name__ == '__main__':
 
-    DREMIO_ENDPOINT = ""
-    DREMIO_PAT = ""
+    args = parse_cli_args()
 
-    source_selector = [[]]
-    space_selector = {}
+    with open(args.export_filter_json, 'r') as f:
+        d = json.load(f)
+        source_selector = d["source_selector"]
+        space_selector = d["space_selector"]
 
-    api = dremio_api.DremioAPI(DREMIO_PAT, DREMIO_ENDPOINT, timeout=60)
+    api = dremio_api.DremioAPI(args.dremio_pat, args.dremio_endpoint, timeout=60)
 
     if True:
         catalog_entries = write_catalog_entries_to_file(api, space_selector, source_selector)
@@ -239,6 +255,7 @@ if __name__ == '__main__':
             continue
 
         dbt_config = {
+            'reflection_name': reflection_name,
             'reflection_type': refl_type,
             'display': display_columns,
             'dimensions': dimensions,
@@ -250,7 +267,7 @@ if __name__ == '__main__':
         config = generate_config(dbt_config, [ref])
 
         refl_path = str(dir_path) + "/models/" + "/".join(dataset_path[:-1])
-        refl_name = refl_path + "/REFL_" + reflection_name + "_" + reflection_id[:8] + ".sql"
+        refl_name = refl_path + "/REFL_" + reflection_name.replace(" ", "").lower() + "_" + reflection_id[:8] + ".sql"
 
         with open(refl_name, "w") as file:
             file.write(config)
