@@ -7,4 +7,4 @@ model-paths: ["models"]
 profile: '<INSERT_PROFILE_FROM_PROFILES_YAML>'
 
 vars:
-  dremio:reflections_enabled: true
+  dremio:reflections_metadata_enabled: true
