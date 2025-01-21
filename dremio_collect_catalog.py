@@ -38,7 +38,7 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root, space_select
                 logger.info(f"Traversing SPACE {entry['path']} ...")
                 catalog_entries = collect_dremio_catalog_children(api, catalog_entries, catalog_id)
         else:
-            logger.error(f"Unexpected container type {container_type}")
+            logger.error(f"Unsupported container type {container_type}")
     return catalog_entries
 
 
@@ -132,7 +132,7 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
         elif child['type'] == 'FILE':
             logger.debug(f"Skipping unpromoted file {child['path']}")
         else:
-            logger.warning(f"Unexpected container {container_type} or dataset {dataset_type}")
+            logger.warning(f"Unsupported container {container_type} or dataset {dataset_type}")
             print(child)
     return data_sources
 

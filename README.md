@@ -38,7 +38,7 @@ space_selector = {"DremioSpace1", "UseCase2"}
 - UDFs (-> Alternative tool: `dremio-udf-recreator`)
 - Row- and Column-level access controls (-> Alternative tool: `dremio-udf-recreator`)
 - Scripts (-> Alternative tool: `dremio-script-recreator`)
-- Wikis & Tags (-> Not supported by dbt-dremio)
+- Wikis & Tags (-> TODO)
 - Privileges/RBAC
 
 # Out of scope

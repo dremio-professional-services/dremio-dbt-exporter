@@ -70,7 +70,7 @@ def generate_parent_refs(view_path, parents: list[dict], catalog_lookup: dict[di
             parent_path_str = generate_path_str(parent_path)
             parent_paths.append(parent_path_str)
         else:
-            raise ValueError(f"Unexpected parent object_type {p_object_type}")
+            raise ValueError(f"Unsupported parent object_type {p_object_type}")
     
     return parent_paths
 
@@ -92,6 +92,7 @@ def generate_config(dbt_config: dict[str], parent_paths: list[str]) -> str:
         c += pre_hooks_str
 
     # For reflections
+    # TODO: Review & test dbt-dremio 1.8.1 changes
     if dbt_config.get('reflection_type'):
         c += "materialized='reflection'"
         c += ",\nreflection_type='" + dbt_config['reflection_type'] + "'"
@@ -143,7 +144,7 @@ if __name__ == '__main__':
 
     DREMIO_ENDPOINT = ""
     DREMIO_PAT = ""
-    
+
     source_selector = [[]]
     space_selector = {}
 
@@ -153,6 +154,8 @@ if __name__ == '__main__':
         catalog_entries = write_catalog_entries_to_file(api, space_selector, source_selector)
         catalog_lookup = write_catalog_lookup_to_file(catalog_entries)
     else: # for local debugging
+        # with open("dremio_catalog_entries.json", 'r') as f:
+        #     catalog_entries = json.load(f)
         with open("dremio_catalog_lookup.json", 'r') as f:
             catalog_lookup = json.load(f)
 
@@ -232,7 +235,7 @@ if __name__ == '__main__':
         elif reflection_type == 'AGGREGATION':
             refl_type = 'aggregate'
         else:
-            logger.error(f"Unexpected reflection type {reflection_type} for dataset {dataset_name}")
+            logger.error(f"Unsupported reflection type {reflection_type} for dataset {dataset_name}")
             continue
 
         dbt_config = {

@@ -1,0 +1,10 @@
+name: 'dremio_dbt_exporter'
+version: '1.0.0'
+config-version: 2
+
+model-paths: ["models"]
+
+profile: '<INSERT_PROFILE_FROM_PROFILES_YAML>'
+
+vars:
+  dremio:reflections_enabled: true

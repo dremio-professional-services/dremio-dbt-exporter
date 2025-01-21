@@ -13,9 +13,13 @@ class DremioAPI:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + dremio_pat
         }
+        # Validate token
+        response = requests.request("GET", self.dremio_url + '/api/v3/catalog', headers=self.headers, timeout=self.timeout, verify=self.verify)
+        if response.status_code != 200:
+            raise Exception(f"Unable to log into {self.dremio_url}. Please validate endpoint and PAT.")
 
     def get_dataset_id(self, dataset: str):
-        dataset_path = dataset.replace(".","/").replace('"','')
+        dataset_path = dataset.replace(".", "/").replace('"', '')
         url = self.dremio_url + '/api/v3/catalog/by-path/'  + dataset_path
 
         logger.info(f"Getting ID of {dataset}")
