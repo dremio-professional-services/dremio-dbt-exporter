@@ -152,12 +152,15 @@ def parse_cli_args():
                         required=True)
     parser.add_argument('--dremio-endpoint', type=str, help='Dremio URL incl. https:// prefix', required=True)
     parser.add_argument('--dremio-pat', type=str, help='Dremio PAT', required=True)
+    parser.add_argument('--output-dir', type=str, help='Output directory of dbt models', required=False)
     cli_args = parser.parse_args()
     return cli_args
 
 if __name__ == '__main__':
 
     args = parse_cli_args()
+    if args.output_dir:
+        dir_path = args.output_dir
 
     with open(args.export_filter_json, 'r') as f:
         d = json.load(f)
