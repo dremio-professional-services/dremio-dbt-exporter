@@ -28,7 +28,7 @@ def write_catalog_entries_to_file(api: dremio_api.DremioAPI, space_selector=set(
 
     catalog_entries = dremio_collect_catalog.get_catalog_entries(api, space_selector, source_selector)
     json_filename = 'dremio_catalog_entries.json'
-    with open(json_filename, 'w') as f:
+    with open(os.path.join(dir_path, json_filename), 'w') as f:
         json.dump(catalog_entries, f)
         logger.info(f"Created {json_filename} with {len(catalog_entries)} entries")
 
@@ -39,7 +39,7 @@ def write_catalog_lookup_to_file(catalog_entries) -> dict[dict]:
 
     catalog_lookup = dremio_collect_catalog.generate_catalog_lookup(catalog_entries)
     json_filename = 'dremio_catalog_lookup.json'
-    with open(json_filename, 'w') as f:
+    with open(os.path.join(dir_path, json_filename), 'w') as f:
         json.dump(catalog_lookup, f)
         logger.info(f"Created {json_filename} with {len(catalog_lookup)} entries")
 
@@ -160,7 +160,9 @@ if __name__ == '__main__':
 
     args = parse_cli_args()
     if args.output_dir:
-        dir_path = args.output_dir
+        output_dir = args.output_dir
+    else:
+        output_dir = dir_path
 
     with open(args.export_filter_json, 'r') as f:
         d = json.load(f)
@@ -205,7 +207,7 @@ if __name__ == '__main__':
             'post_hook': []
         }
 
-        model_path = str(dir_path) + "/models/" + "/".join(view_path[:-1])
+        model_path = str(output_dir) + "/models/" + "/".join(view_path[:-1])
         model_name = model_path + "/" + generate_path_str(view_path) + ".sql"
 
         parent_paths = generate_parent_refs(view_path, parents, catalog_lookup)
@@ -269,7 +271,7 @@ if __name__ == '__main__':
         }
         config = generate_config(dbt_config, [ref])
 
-        refl_path = str(dir_path) + "/models/" + "/".join(dataset_path[:-1])
+        refl_path = str(output_dir) + "/models/" + "/".join(dataset_path[:-1])
         refl_name = refl_path + "/REFL_" + reflection_name.replace(" ", "").lower() + "_" + reflection_id[:8] + ".sql"
 
         with open(refl_name, "w") as file:
@@ -282,7 +284,7 @@ if __name__ == '__main__':
         # logger.info(pds)
         data_sources.add(pds[0])
 
-    with open("pds_promote.sql", 'w') as f:
+    with open(os.path.join(dir_path, "pds_promote.sql"), 'w') as f:
         sql_txt = ""
         for pds in pdss:
             pds_path = '"' + '"."'.join(pds) + '"'
