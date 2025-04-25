@@ -215,9 +215,9 @@ if __name__ == '__main__':
         config = generate_config(dbt_config, parent_paths)
         sql_definition = config + sql_definition
         if sql_context:
-            logger.warn(f"Found SQL context {context} in view {view_path}")
+            logger.warn(f"Found SQL context {sql_context} in view {view_path}")
             context = str(sql_context.split('.')) # Note that this logic does not handle special cases like "Samples"."samples.dremio.com"
-            sql_definition += "\n--SQL_CONTEXT=" + context
+            sql_definition += "\n--SQL_CONTEXT=" + sql_context
 
         # create the new directories as needed
         if not os.path.exists(model_path):
