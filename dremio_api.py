@@ -100,3 +100,30 @@ class DremioAPI:
             return {"rows": rows, "columns": columns}
         else:
             raise Exception(f'Query data could not be retrieved - Incorrect Job State: {job_state}')
+
+    def get_catalog_tags(self, catalog_id: str) -> list[str]:
+        """
+        Retrieve tags for a catalog entity by its ID
+        
+        Args:
+            catalog_id: The ID of the catalog entity
+            
+        Returns:
+            A list of tags associated with the catalog entity
+        """
+        url = self.dremio_url + f'/api/v3/catalog/{catalog_id}/collaboration/tag'
+        
+        logger.debug(f"Getting tags for catalog ID {catalog_id}")
+        response = requests.get(
+            url, 
+            headers=self.headers, 
+            timeout=self.timeout, 
+            verify=self.verify
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('tags', [])
+        else:
+            logger.debug(f"Failed to get tags for catalog ID {catalog_id}: {response.status_code}")
+            return []

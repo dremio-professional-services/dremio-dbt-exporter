@@ -8,3 +8,7 @@ profile: '<INSERT_PROFILE_FROM_PROFILES_YAML>'
 
 vars:
   dremio:reflections_metadata_enabled: true
+
+models:
+  +persist_docs:
+    relation: true

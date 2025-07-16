@@ -27,12 +27,13 @@ The results will be exported into the `[foo/]models/` subfolder.
 - Reflections (some syntax limitations may apply)
 - Folders (implicit)
 - Spaces (implicit)
+- Dataset Tags
 
 # Currently not supported
 - UDFs (-> Alternative tool: `dremio-udf-recreator`)
 - Row- and Column-level access controls (-> Alternative tool: `dremio-udf-recreator`)
 - Scripts (-> Alternative tool: `dremio-script-recreator`)
-- Wikis & Tags (-> TODO)
+- Wikis (-> TODO)
 - Privileges/RBAC
 
 # Out of scope

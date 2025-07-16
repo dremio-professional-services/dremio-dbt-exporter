@@ -85,6 +85,8 @@ def generate_config(dbt_config: dict[str], parent_paths: list[str]) -> str:
         c += ",\ndatabase='" + dbt_config['database'] + "'"
     if dbt_config.get('schema'):
         c += ",\nschema='" + ".".join(dbt_config['schema']) + "'"
+    if dbt_config.get('tags'):
+        c += ",\ntags=" + str(dbt_config['tags'])
     if dbt_config.get('pre_hook'):
         pre_hooks_str = ',\npre_hook=[\n'
         for h in dbt_config['pre_hook']:
@@ -195,6 +197,7 @@ if __name__ == '__main__':
         try:
             parents = catalog_lookup[view_id]['parents']
             view_path = catalog_lookup[view_id]['object_path']
+            tags = catalog_lookup[view_id]['tags']
         except Exception as e:
             logger.error(f"Lookup entry not found for {view_name} {row['path']} - {view_id}")
             continue
@@ -203,6 +206,7 @@ if __name__ == '__main__':
             'database': view_path[0],
             'schema': view_path[1:-1],
             'alias': view_path[-1],
+            'tags': tags,
             'pre_hook': [],
             'post_hook': []
         }

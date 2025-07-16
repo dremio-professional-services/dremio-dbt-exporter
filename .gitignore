@@ -6,3 +6,5 @@ pds_paths.json
 pds_promote.sql
 .DS_Store
 models/
+logs/dbt.log
+target/
