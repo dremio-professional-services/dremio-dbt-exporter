@@ -127,3 +127,30 @@ class DremioAPI:
         else:
             logger.debug(f"Failed to get tags for catalog ID {catalog_id}: {response.status_code}")
             return []
+
+    def get_catalog_wiki(self, catalog_id: str) -> str:
+        """
+        Retrieve wiki content for a catalog entity by its ID
+        
+        Args:
+            catalog_id: The ID of the catalog entity
+            
+        Returns:
+            The wiki text content associated with the catalog entity
+        """
+        url = self.dremio_url + f'/api/v3/catalog/{catalog_id}/collaboration/wiki'
+        
+        logger.debug(f"Getting wiki for catalog ID {catalog_id}")
+        response = requests.get(
+            url, 
+            headers=self.headers, 
+            timeout=self.timeout, 
+            verify=self.verify
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('text', '')
+        else:
+            logger.debug(f"Failed to get wiki for catalog ID {catalog_id}: {response.status_code}")
+            return ''

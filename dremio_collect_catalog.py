@@ -54,7 +54,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             "parent": [],
             "parent_id": "",
             "parent_type": "",
-            "tags": []
+            "tags": [],
+            "wiki": ""
         })
     except KeyError:
         logger.info(f"Skipping catalog ID {catalog_id}")
@@ -71,6 +72,7 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
         elif child['type'] == 'DATASET' and dataset_type == 'PROMOTED':
             type_name = 'PDS'
             tags = api.get_catalog_tags(catalog_id)
+            wiki = api.get_catalog_wiki(catalog_id)
             data_sources.append({
                 "id": catalog_id,
                 "object_type": type_name,
@@ -78,11 +80,13 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                 "parent": data_source_path,
                 "parent_id": "",
                 "parent_type": "SOURCE",
-                "tags": tags
+                "tags": tags,
+                "wiki": wiki
             })
         elif child['type'] == 'DATASET' and dataset_type == 'VIRTUAL':
             type_name = 'VDS'
             tags = api.get_catalog_tags(catalog_id)
+            wiki = api.get_catalog_wiki(catalog_id)
             vds_graph = api.get_catalog(catalog_id=f"{catalog_id}/graph")
             try:
                 parents = vds_graph['parents']
@@ -95,7 +99,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                         "parent": [],
                         "parent_id": "",
                         "parent_type": "",
-                        "tags": tags
+                        "tags": tags,
+                        "wiki": wiki
                     })
                     
                 for parent in parents:
@@ -106,7 +111,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                         "parent": parent['path'],
                         "parent_id": parent['id'],
                         "parent_type": parent['datasetType'],
-                        "tags": tags
+                        "tags": tags,
+                        "wiki": wiki
                     })
             except KeyError as e:
                 logger.error(f"Data lineage for view {child['path']} could not be retrieved")
@@ -117,7 +123,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                     "parent": [],
                     "parent_id": "",
                     "parent_type": "",
-                    "tags": tags
+                    "tags": tags,
+                    "wiki": wiki
                 })
 
             # # Add column entries
@@ -161,6 +168,7 @@ def generate_catalog_lookup(catalog_entries: list[dict]):
                 "object_path": entry['object_path'],
                 "object_type": entry['object_type'],
                 "parents": [parent_entry],
-                "tags": entry['tags']
+                "tags": entry['tags'],
+                "wiki": entry['wiki']
             }
     return catalog_lookup
